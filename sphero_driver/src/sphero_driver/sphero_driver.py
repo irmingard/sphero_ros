@@ -834,7 +834,6 @@ class Sphero(threading.Thread):
                     # response packet
                     data_length = ord(data[4])
                     if data_length + 5 <= len(data):
-                        # todo local data packet is not used?
                         data_packet = data[:(5 + data_length)]
                         data = data[(5 + data_length):]
                     else:
