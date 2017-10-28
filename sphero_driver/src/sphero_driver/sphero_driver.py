@@ -194,10 +194,11 @@ class BTInterface(object):
                 sys.stdout.flush()
                 sys.exit(1)
         else:
-            sys.stdout.write("Connecting to device: " + self.target_address + "...")
+            sys.stdout.write("Connecting to device with address " + self.target_address + "... ")
 
         try:
             self.sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            # todo: investigate instant BT error
             self.sock.connect((self.target_address, self.port))
         except bluetooth.btcommon.BluetoothError as error:
             sys.stdout.write(error.strerror)
@@ -248,22 +249,21 @@ class Sphero(threading.Thread):
 
     def pack_cmd(self, req, cmd):
         self.inc_seq()
-        #   print req + [self.seq] + [len(cmd)+1] + cmd
         return req + [self.seq] + [len(cmd) + 1] + cmd
 
     def data2hexstr(self, data):
         return ' '.join([("%02x" % ord(d)) for d in data])
 
     def create_mask_list(self, mask1, mask2):
-        # save the mask
         sorted_STRM1 = sorted(STRM_MASK1.iteritems(), key=operator.itemgetter(1), reverse=True)
         # create a list containing the keys that are part of the mask
-        self.mask_list1 = [key for key, value in sorted_STRM1 if value & mask1]
+        mask_list1 = [key for key, value in sorted_STRM1 if value & mask1]
 
         sorted_STRM2 = sorted(STRM_MASK2.iteritems(), key=operator.itemgetter(1), reverse=True)
         # create a list containing the keys that are part of the mask
-        self.mask_list2 = [key for key, value in sorted_STRM2 if value & mask2]
-        self.mask_list = self.mask_list1 + self.mask_list2
+        mask_list2 = [key for key, value in sorted_STRM2 if value & mask2]
+
+        self.mask_list = mask_list1 + mask_list2
 
     def add_async_callback(self, callback_type, callback):
         self._async_callback_dict[callback_type] = callback
@@ -830,15 +830,11 @@ class Sphero(threading.Thread):
             data = self.raw_data_buf
             while len(data) > 5:
                 if data[:2] == RECV['SYNC']:
-                    # print "got response packet"
-                    # response packet
                     data_length = ord(data[4])
                     if data_length + 5 <= len(data):
-                        data_packet = data[:(5 + data_length)]
                         data = data[(5 + data_length):]
                     else:
                         break
-                        # print "Response packet", self.data2hexstr(data_packet)
 
                 elif data[:2] == RECV['ASYNC']:
                     data_length = (ord(data[3]) << 8) + ord(data[4])
@@ -851,17 +847,17 @@ class Sphero(threading.Thread):
                     if data_packet[2] == IDCODE['DATA_STRM'] and IDCODE['DATA_STRM'] in self._async_callback_dict:
                         self._async_callback_dict[IDCODE['DATA_STRM']](self.parse_data_strm(data_packet, data_length))
                     elif data_packet[2] == IDCODE['COLLISION'] and IDCODE['COLLISION'] in self._async_callback_dict:
-                        self._async_callback_dict[IDCODE['COLLISION']](
-                            self.parse_collision_detect(data_packet, data_length))
+                        self._async_callback_dict[IDCODE['COLLISION']](self.parse_collision_detect(data_packet))
                     elif data_packet[2] == IDCODE['PWR_NOTIFY'] and IDCODE['PWR_NOTIFY'] in self._async_callback_dict:
-                        self._async_callback_dict[IDCODE['PWR_NOTIFY']](self.parse_pwr_notify(data_packet, data_length))
+                        self._async_callback_dict[IDCODE['PWR_NOTIFY']](self.parse_pwr_notify(data_packet))
                     else:
-                        print "got a packet that isn't streaming: " + self.data2hexstr(data)
+                        print "Got a packet that isn't streaming: " + self.data2hexstr(data)
                 else:
-                    raise RuntimeError("Bad SOF : " + self.data2hexstr(data))
+                    sys.stdout.write("Old data packet left, clearing buffer.\n")
+                    data = []
             self.raw_data_buf = data
 
-    def parse_pwr_notify(self, data, data_length):
+    def parse_pwr_notify(self, data):
         """
         The data payload of the async message is 1h bytes long and
         formatted as follows::
@@ -878,7 +874,7 @@ class Sphero(threading.Thread):
         """
         return struct.unpack_from('B', ''.join(data[5:]))[0]
 
-    def parse_collision_detect(self, data, data_length):
+    def parse_collision_detect(self, data):
         """
         The data payload of the async message is 10h bytes long and
         formatted as follows::
