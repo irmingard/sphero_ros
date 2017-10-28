@@ -630,6 +630,7 @@ class Sphero(threading.Thread):
         message is generated, preventing message overload to the
         client. The value is in 10 millisecond increments.
 
+        :param response:  request response back from Sphero.
         :param method: Detection method type to use. Currently the only\
         method supported is 01h. Use 00h to completely disable this\
         service.
@@ -659,6 +660,7 @@ class Sphero(threading.Thread):
         which persists across power cycles and is rendered in the gap
         between an application connecting and sending this command.
 
+        :param response:  request response back from Sphero.
         :param red: red color value.
         :param green: green color value.
         :param blue: blue color value.
@@ -728,6 +730,7 @@ class Sphero(threading.Thread):
         if both modes aren't "ignore" so you'll need to re-enable it via
         CID 02h once you're done.
 
+        :param response:  request response back from Sphero.
         :param l_mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 - brake, 0x04 - ignored.
         :param r_mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 - brake, 0x04 - ignored.
         :param l_power: 0-255 scalar value (units?).
@@ -831,6 +834,7 @@ class Sphero(threading.Thread):
                     # response packet
                     data_length = ord(data[4])
                     if data_length + 5 <= len(data):
+                        # todo local data packet is not used?
                         data_packet = data[:(5 + data_length)]
                         data = data[(5 + data_length):]
                     else:
@@ -845,14 +849,12 @@ class Sphero(threading.Thread):
                     else:
                         # the remainder of the packet isn't long enough
                         break
-                    if data_packet[2] == IDCODE['DATA_STRM'] and self._async_callback_dict.has_key(IDCODE['DATA_STRM']):
+                    if data_packet[2] == IDCODE['DATA_STRM'] and IDCODE['DATA_STRM'] in self._async_callback_dict:
                         self._async_callback_dict[IDCODE['DATA_STRM']](self.parse_data_strm(data_packet, data_length))
-                    elif data_packet[2] == IDCODE['COLLISION'] and self._async_callback_dict.has_key(
-                            IDCODE['COLLISION']):
+                    elif data_packet[2] == IDCODE['COLLISION'] and IDCODE['COLLISION'] in self._async_callback_dict:
                         self._async_callback_dict[IDCODE['COLLISION']](
                             self.parse_collision_detect(data_packet, data_length))
-                    elif data_packet[2] == IDCODE['PWR_NOTIFY'] and self._async_callback_dict.has_key(
-                            IDCODE['PWR_NOTIFY']):
+                    elif data_packet[2] == IDCODE['PWR_NOTIFY'] and IDCODE['PWR_NOTIFY'] in self._async_callback_dict:
                         self._async_callback_dict[IDCODE['PWR_NOTIFY']](self.parse_pwr_notify(data_packet, data_length))
                     else:
                         print "got a packet that isn't streaming: " + self.data2hexstr(data)
