@@ -889,11 +889,15 @@ class Sphero(threading.Thread):
         refer to the documentation of CID 50h and 51h to make sense of\
         this value.
         """
-        output = {}
+        return {'X': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[0],
+                  'Y': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[1],
+                  'Z': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[2],
+                  'Axis': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[3],
+                  'xMagnitude': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[4],
+                  'yMagnitude': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[5],
+                  'Speed': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[6],
+                  'Timestamp': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[7]}
 
-        output['X'], output['Y'], output['Z'], output['Axis'], output['xMagnitude'], output['yMagnitude'], output[
-            'Speed'], output['Timestamp'] = struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))
-        return output
 
     def parse_data_strm(self, data, data_length):
         output = {}
