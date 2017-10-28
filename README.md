@@ -1,18 +1,10 @@
-sphero_ros
-==========
+# Requirements
 
-checkout the [docs](http://mmwise.github.com/sphero_ros)
+1) Ubuntu 12.04
 
-=======
-## Installation
-Installation is now based on catkin:
+# Build and install driver
+Repeat if changing driver code
 
-      cd <ws>/src
-      git clone https://github.com/mmwise/sphero_ros
-      cd <ws>
-      catkin_make
-      catkin_make install
-      source <ws>/install/setup.bash
-      ...
-
-
+    cd sphero_driver
+    python setup.py build
+    sudo python setup.py install
