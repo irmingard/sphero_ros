@@ -715,9 +715,10 @@ class Sphero(threading.Thread):
         if both modes aren't "ignore" so you'll need to re-enable it via
         CID 02h once you're done.
 
-        :param mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 -\
-        brake, 0x04 - ignored.
-        :param power: 0-255 scalar value (units?).
+        :param l_mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 - brake, 0x04 - ignored.
+        :param r_mode: 0x00 - off, 0x01 - forward, 0x02 - reverse, 0x03 - brake, 0x04 - ignored.
+        :param l_power: 0-255 scalar value (units?).
+        :param r_power: 0-255 scalar value (units?).
         """
         self.send(self.pack_cmd(REQ['CMD_RAW_MOTORS'], [l_mode, l_power, r_mode, r_power]), response)
 
