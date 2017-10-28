@@ -547,11 +547,11 @@ class Sphero(threading.Thread):
         :param pcnt: packet count (set to 0 for unlimited streaming).
         :param response: request response back from Sphero.
         """
-        data = self.pack_cmd(REQ['CMD_SET_DATA_STRM'], \
+        data = self.pack_cmd(REQ['CMD_SET_DATA_STRM'],
                              [(sample_div >> 8), (sample_div & 0xff), (sample_frames >> 8), (sample_frames & 0xff),
-                              ((sample_mask1 >> 24) & 0xff), \
+                              ((sample_mask1 >> 24) & 0xff),
                               ((sample_mask1 >> 16) & 0xff), ((sample_mask1 >> 8) & 0xff), (sample_mask1 & 0xff), pcnt,
-                              ((sample_mask2 >> 24) & 0xff), \
+                              ((sample_mask2 >> 24) & 0xff),
                               ((sample_mask2 >> 16) & 0xff), ((sample_mask2 >> 8) & 0xff), (sample_mask2 & 0xff)])
         self.create_mask_list(sample_mask1, sample_mask2)
         self.stream_mask1 = sample_mask1
