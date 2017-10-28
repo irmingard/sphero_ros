@@ -187,7 +187,7 @@ class BTInterface(object):
                     break
 
             if self.target_address is not None:
-                sys.stdout.write("\nFound Sphero device with address: %s\n" % (self.target_address))
+                sys.stdout.write("\nFound Sphero device with address: %s\n" % self.target_address)
                 sys.stdout.flush()
             else:
                 sys.stdout.write("\nNo Sphero devices found.\n")
