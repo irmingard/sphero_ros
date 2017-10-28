@@ -201,10 +201,9 @@ class BTInterface(object):
             # todo: investigate instant BT error
             self.sock.connect((self.target_address, self.port))
         except bluetooth.btcommon.BluetoothError as error:
-            sys.stdout.write(error.strerror)
+            sys.stdout.write("Bluetooth Error " + error.args[0] + "\n")
             sys.stdout.flush()
-            time.sleep(5.0)
-            sys.exit(1)
+            return False
         sys.stdout.write("Paired with Sphero.\n")
         sys.stdout.flush()
         return True
