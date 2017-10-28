@@ -764,7 +764,7 @@ class Sphero(threading.Thread):
         self.recv(1024)
 
     def recv(self, num_bytes):
-        '''
+        """
         Commands are acknowledged from the Sphero -> Client in the
         following format::
 
@@ -806,7 +806,7 @@ class Sphero(threading.Thread):
           DID through the end of the data payload, bit inverted (1's\
           complement)
 
-        '''
+        """
 
         while self.is_connected and not self.shutdown:
             with self._communication_lock:
@@ -848,7 +848,7 @@ class Sphero(threading.Thread):
             self.raw_data_buf = data
 
     def parse_pwr_notify(self, data, data_length):
-        '''
+        """
         The data payload of the async message is 1h bytes long and
         formatted as follows::
 
@@ -861,11 +861,11 @@ class Sphero(threading.Thread):
           * 02h = Battery OK,
           * 03h = Battery Low,
           * 04h = Battery Critical
-        '''
+        """
         return struct.unpack_from('B', ''.join(data[5:]))[0]
 
     def parse_collision_detect(self, data, data_length):
-        '''
+        """
         The data payload of the async message is 10h bytes long and
         formatted as follows::
 
@@ -888,7 +888,7 @@ class Sphero(threading.Thread):
         * Timestamp - The millisecond timer value at the time of impact;\
         refer to the documentation of CID 50h and 51h to make sense of\
         this value.
-        '''
+        """
         output = {}
 
         output['X'], output['Y'], output['Z'], output['Axis'], output['xMagnitude'], output['yMagnitude'], output[
