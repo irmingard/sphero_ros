@@ -198,11 +198,12 @@ class BTInterface(object):
 
         try:
             self.sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            # todo: investigate instant BT error
             self.sock.connect((self.target_address, self.port))
         except bluetooth.btcommon.BluetoothError as error:
             sys.stdout.write("Bluetooth Error " + error.args[0] + "\n")
             sys.stdout.flush()
+            if error.args[0] == "(16, 'Device or resource busy')":
+                time.sleep(1)  # repeats quickly, thus only error so far that should trigger a wait before retrying
             return False
         sys.stdout.write("Paired with Sphero.\n")
         sys.stdout.flush()
