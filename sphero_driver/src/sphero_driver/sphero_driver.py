@@ -323,7 +323,7 @@ class Sphero(threading.Thread):
         """
         self.send(self.pack_cmd(REQ['CMD_GET_BT_NAME'], []), response)
 
-    def set_auto_reconnect(self, enable, time, response):
+    def set_auto_reconnect(self, enable, auto_reconnect_time, response):
         """
         This configures the control of the Bluetooth module in its attempt
         to automatically reconnect with the last iPhone device. This is a
@@ -335,11 +335,11 @@ class Sphero(threading.Thread):
         seconds after waking up.
 
         :param enable: 00h to disable or 01h to enable auto reconnecting.
-        :param time: the number of seconds after power-up in which to\
+        :param auto_reconnect_time: the number of seconds after power-up in which to\
         enable auto reconnect mode
         :param response: request response back from Sphero.
         """
-        self.send(self.pack_cmd(REQ['CMD_SET_AUTO_RECONNECT'], [enable, time]), response)
+        self.send(self.pack_cmd(REQ['CMD_SET_AUTO_RECONNECT'], [enable, auto_reconnect_time]), response)
 
     def get_auto_reconnect(self, response):
         """
@@ -372,7 +372,7 @@ class Sphero(threading.Thread):
         """
         self.send(self.pack_cmd(REQ['CMD_SET_PWR_NOTIFY'], [enable]), response)
 
-    def go_to_sleep(self, time, macro, response):
+    def go_to_sleep(self, auto_reawake_time, macro, response):
         """
         This puts Sphero to sleep immediately with two parameters: the
         first is the number of seconds after which it will automatically
@@ -380,11 +380,12 @@ class Sphero(threading.Thread):
         the MACRO parameter allows an optional system macro to be run upon
         wakeup. If this is set to zero, no macro is executed.
 
-        :param time: number of seconds wait before auto re-awake.
+        :param auto_reawake_time: number of seconds wait before auto re-awake.
         :param macro: macro number to run when re-awakened.
         :param response: request response back from Sphero.
         """
-        self.send(self.pack_cmd(REQ['CMD_SLEEP'], [(time >> 8), (time & 0xff), macro]), response)
+        self.send(self.pack_cmd(REQ['CMD_SLEEP'], [(auto_reawake_time >> 8), (auto_reawake_time & 0xff), macro]),
+                  response)
 
     def run_l1_diags(self, response):
         """
@@ -432,7 +433,7 @@ class Sphero(threading.Thread):
                                 [((counter >> 24) & 0xff), ((counter >> 16) & 0xff), ((counter >> 8) & 0xff),
                                  (counter & 0xff)]), response)
 
-    def poll_packet_times(self, time, response):
+    def poll_packet_times(self, client_time, response):
         """
         This command helps the Client application profile the transmission
         and processing latencies in Sphero so that a relative
@@ -458,11 +459,16 @@ class Sphero(threading.Thread):
           Client and Sphero:
             * delay :math:`= (T_{4} - T_{1}) - (T_{3} - T_{2})`
 
-        :param time: client Tx time.
+        :param client_time: client Tx time.
         :param response: request response back from Sphero.
         """
         self.send(self.pack_cmd(REQ['CMD_POLL_TIME'],
-                                [((time >> 24) & 0xff), ((time >> 16) & 0xff), ((time >> 8) & 0xff), (time & 0xff)]),
+                                [
+                                    ((client_time >> 24) & 0xff),
+                                    ((client_time >> 16) & 0xff),
+                                    ((client_time >> 8) & 0xff),
+                                    (client_time & 0xff)
+                                ]),
                   response)
 
     def set_heading(self, heading, response):
@@ -544,6 +550,7 @@ class Sphero(threading.Thread):
         :param sample_div: divisor of the maximum sensor sampling rate.
         :param sample_frames: number of sample frames emitted per packet.
         :param sample_mask1: bitwise selector of data sources to stream.
+        :param sample_mask2: bitwise selector of data sources to stream.
         :param pcnt: packet count (set to 0 for unlimited streaming).
         :param response: request response back from Sphero.
         """
@@ -626,10 +633,16 @@ class Sphero(threading.Thread):
         :param method: Detection method type to use. Currently the only\
         method supported is 01h. Use 00h to completely disable this\
         service.
-        :param Xt, Yt: An 8-bit settable threshold for the X (left/right)\
+        :param Xt: An 8-bit settable threshold for the X (left/right)\
         and Y (front/back) axes of Sphero. A value of 00h disables the\
         contribution of that axis.
-        :param Xspd,Yspd: An 8-bit settable speed value for the X and Y\
+        :param Yt: An 8-bit settable threshold for the X (left/right)\
+        and Y (front/back) axes of Sphero. A value of 00h disables the\
+        contribution of that axis.
+        :param Xspd: An 8-bit settable speed value for the X and Y\
+        axes. This setting is ranged by the speed, then added to Xt, Yt to\
+        generate the final threshold value.
+        :param Yspd: An 8-bit settable speed value for the X and Y\
         axes. This setting is ranged by the speed, then added to Xt, Yt to\
         generate the final threshold value.
         :param ignore_time: An 8-bit post-collision dead time to prevent\
@@ -692,7 +705,7 @@ class Sphero(threading.Thread):
         self.send(self.pack_cmd(REQ['CMD_ROLL'], [self.clamp(speed, 0, 255), (heading >> 8), (heading & 0xff), state]),
                   response)
 
-    def boost(self, time, heading, response):
+    def boost(self, boost_time, heading, response):
         """
         This commands Sphero to meet the provided heading, disable
         stabilization and ramp the motors up to full-speed for a period of
@@ -700,11 +713,11 @@ class Sphero(threading.Thread):
         second. Setting it to zero enables constant boost until a Set
         Stabilization command is received.
 
-        :param time: duration of boost in tenths of seconds.
+        :param boost_time: duration of boost in tenths of seconds.
         :param heading: the heading to travel while boosting.
         :param response: request response back from Sphero.
         """
-        self.send(self.pack_cmd(REQ['CMD_BOOST'], [time, (heading >> 8), (heading & 0xff)]), response)
+        self.send(self.pack_cmd(REQ['CMD_BOOST'], [boost_time, (heading >> 8), (heading & 0xff)]), response)
 
     def set_raw_motor_values(self, l_mode, l_power, r_mode, r_power, response):
         """
@@ -890,14 +903,13 @@ class Sphero(threading.Thread):
         this value.
         """
         return {'X': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[0],
-                  'Y': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[1],
-                  'Z': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[2],
-                  'Axis': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[3],
-                  'xMagnitude': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[4],
-                  'yMagnitude': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[5],
-                  'Speed': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[6],
-                  'Timestamp': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[7]}
-
+                'Y': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[1],
+                'Z': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[2],
+                'Axis': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[3],
+                'xMagnitude': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[4],
+                'yMagnitude': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[5],
+                'Speed': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[6],
+                'Timestamp': struct.unpack_from('>hhhbhhbI', ''.join(data[5:]))[7]}
 
     def parse_data_strm(self, data, data_length):
         output = {}
